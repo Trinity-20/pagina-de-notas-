@@ -5,33 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formulario para Actualizar Alumno</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h2 {
+            color: #343a40;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .small-text {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="container py-5">
         <h2>Formulario para Actualizar Alumno</h2>
         <form action="/actualizar" method="post">
             <!-- Campo para actualizar el nombre -->
             <div class="mb-3">
                 <label for="new_name" class="form-label">Nuevo Nombre</label>
-                <input type="text" class="form-control" id="new_name" name="new_name" required>
+                <input type="text" class="form-control" id="new_name" name="new_name" required placeholder="Ingresa el nuevo nombre del alumno">
             </div>
 
             <!-- Campo para actualizar los cursos -->
             <div class="mb-3">
                 <label for="courses" class="form-label">Cursos y Notas (separados por coma)</label>
-                <input type="text" class="form-control" id="courses" name="grades" required>
-                <small>Ejemplo: Matemáticas, 18, Historia, 15.5</small>
+                <input type="text" class="form-control" id="courses" name="grades" required placeholder="Ejemplo: Matemáticas, 18, Historia, 16.5">
+                <small class="small-text">Asegúrate de ingresar todos los cursos y notas correctamente.</small>
             </div>
 
             <!-- Campo para seleccionar el salón -->
             <div class="mb-3">
                 <label for="salon" class="form-label">Nuevo Salón</label>
-                <input type="text" class="form-control" id="salon" name="salon" required>
-                <small>Ejemplo: 2do B, 2do C</small>
+                <input type="text" class="form-control" id="salon" name="salon" required placeholder="Ejemplo: 2do B, 2do C">
             </div>
 
             <button type="submit" class="btn btn-primary">Actualizar Alumno</button>
         </form>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
