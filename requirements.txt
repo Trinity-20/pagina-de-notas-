@@ -2,4 +2,5 @@ fastapi
 uvicorn
 pymongo
 jinja2
+gunicorn
 #pyinstaller

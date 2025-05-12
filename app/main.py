@@ -76,7 +76,7 @@ async def listar_alumnos(request: Request, salon: str = None):
     # Obtener todos los salones únicos de la base de datos
     all_salons = db.students.distinct("salon")
     
-    # Si se especifica un salón, filtramos por el campo "salon"
+    # "salon"
     if salon:
         alumnos = db.students.find({"salon": salon})
     else:
