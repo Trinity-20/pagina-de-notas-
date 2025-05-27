@@ -1,63 +1,130 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Alumna</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
-        h2 {
-            color: #343a40;
-            margin-bottom: 30px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .form-control {
-            border-radius: 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crear Alumna</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      padding: 2.5rem 2rem;
+      max-width: 700px;
+      margin: 4rem auto;
+    }
+    h2 {
+      color: #343a40;
+      margin-bottom: 2rem;
+      text-align: center;
+      font-weight: 600;
+    }
+    .form-control {
+      border-radius: 8px;
+    }
+    .btn-primary {
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+    }
+    .small-text {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2>Crear Alumna</h2>
-        <form action="/crear" method="post">
-            <!-- Campo para el nombre -->
-            <div class="mb-3">
-                <label for="name" class="form-label">Nombre del Alumno</label>
-                <input type="text" class="form-control" id="name" name="name" required placeholder="Ingresa el nombre completo del alumno">
+  <div class="container">
+    <h2>Crear Alumna</h2>
+    <form action="/crear" method="post" novalidate>
+      
+      <div class="mb-4">
+        <label for="name" class="form-label">Nombre del Alumno</label>
+        <input
+          type="text"
+          class="form-control"
+          id="name"
+          name="name"
+          required
+          placeholder="Ingresa el nombre completo del alumno"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Cursos y Notas</label>
+        <div id="cursos-container">
+          <div class="row mb-2 align-items-center">
+            <div class="col-5">
+              <input type="text" class="form-control" name="subjects" placeholder="Curso" />
             </div>
-
-            <!-- Campo para las notas -->
-            <div class="mb-3">
-                <label for="grades" class="form-label">Cursos y Notas (separados por coma)</label>
-                <input type="text" class="form-control" id="grades" name="grades" required placeholder="Ejemplo: Matemáticas, 18, Historia, 16.5">
-                <small>Ejemplo: Matemáticas, 18, Historia, 16.5</small>
+            <div class="col-5">
+              <input type="number" step="0.1" class="form-control" name="scores" placeholder="Nota" />
             </div>
-
-            <!-- Campo para el salón -->
-            <div class="mb-3">
-                <label for="salon" class="form-label">Salón</label>
-                <input type="text" class="form-control" id="salon" name="salon" required placeholder="Ejemplo: 2do B, 2do C">
-                <small>Ejemplo: 2do B, 2do C</small>
+            <div class="col-2 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFila(this)">✕</button>
             </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="agregarCurso()">+ Agregar curso</button>
+        <div class="small-text mt-1">
+          Puedes agregar o eliminar cursos según sea necesario.
+        </div>
+      </div>
 
-            <button type="submit" class="btn btn-primary">Crear Alumno</button>
-        </form>
-    </div>
+      <div class="mb-4">
+        <label for="salon" class="form-label">Salón</label>
+        <input
+          type="text"
+          class="form-control"
+          id="salon"
+          name="salon"
+          required
+          placeholder="Ejemplo: 2do B, 2do C"
+          autocomplete="off"
+        />
+        <div class="small-text">Ejemplo: 2do B, 2do C</div>
+      </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Crear Alumna</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function agregarCurso() {
+      const container = document.getElementById("cursos-container");
+      const row = document.createElement("div");
+      row.className = "row mb-2 align-items-center";
+      row.innerHTML = `
+        <div class="col-5">
+          <input type="text" class="form-control" name="subjects" placeholder="Curso" />
+        </div>
+        <div class="col-5">
+          <input type="number" step="0.1" class="form-control" name="scores" placeholder="Nota" />
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFila(this)">✕</button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    function eliminarFila(button) {
+      const row = button.closest(".row");
+      if (document.querySelectorAll("#cursos-container .row").length > 1) {
+        row.remove();
+      } else {
+        alert("Debe haber al menos un curso.");
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

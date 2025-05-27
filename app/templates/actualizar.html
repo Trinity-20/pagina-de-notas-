@@ -1,66 +1,187 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualizar Alumna</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
-        h2 {
-            color: #343a40;
-            margin-bottom: 30px;
-        }
-        .form-control {
-            border-radius: 10px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .small-text {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Actualizar Alumna</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      padding: 2.5rem 2rem;
+      max-width: 700px;
+      margin-top: 4rem;
+    }
+    h2 {
+      color: #343a40;
+      margin-bottom: 2rem;
+      text-align: center;
+      font-weight: 600;
+    }
+    .form-control {
+      border-radius: 8px;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+    }
+    .small-text {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  </style>
 </head>
 <body>
-    <div class="container py-5">
-        <h2>Actualizar Alumna</h2>
-        <form action="/actualizar" method="post">
-            <!-- Campo para actualizar el nombre -->
-            <div class="mb-3">
-                <label for="new_name" class="form-label">Nuevo Nombre</label>
-                <input type="text" class="form-control" id="new_name" name="new_name" required placeholder="Ingresa el nuevo nombre del alumno">
+  <div class="container">
+    <h2>Actualizar Alumna</h2>
+
+    <div id="alert-container"></div> <!-- Aquí mostraremos alertas -->
+
+    <form id="update-form" action="/actualizar" method="post" novalidate>
+      
+      <div class="mb-4">
+        <label for="new_name" class="form-label">Nombre</label>
+        <input
+          type="text"
+          class="form-control"
+          id="new_name"
+          name="new_name"
+          required
+          placeholder="Ingresa el nombre del alumno"
+          value="{{ name if name else '' }}"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Cursos y Notas</label>
+        <div id="cursos-container">
+          {% if grades %}
+            {% set items = grades.split(",") %}
+            {% for i in range(0, items|length, 2) %}
+              <div class="row mb-2 align-items-center">
+                <div class="col-5">
+                  <input type="text" class="form-control" name="subjects" placeholder="Curso" value="{{ items[i].strip() }}">
+                </div>
+                <div class="col-5">
+                  <input type="number" step="0.1" class="form-control" name="scores" placeholder="Nota" value="{{ items[i+1].strip() }}">
+                </div>
+                <div class="col-2 text-end">
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFila(this)">✕</button>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="row mb-2 align-items-center">
+              <div class="col-5">
+                <input type="text" class="form-control" name="subjects" placeholder="Curso">
+              </div>
+              <div class="col-5">
+                <input type="number" step="0.1" class="form-control" name="scores" placeholder="Nota">
+              </div>
+              <div class="col-2 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFila(this)">✕</button>
+              </div>
             </div>
+          {% endif %}
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="agregarCurso()">+ Agregar curso</button>
+        <div class="small-text mt-1">
+          Puedes agregar o eliminar cursos según sea necesario.
+        </div>
+      </div>
 
-            <!-- Campo para actualizar los cursos -->
-            <div class="mb-3">
-                <label for="courses" class="form-label">Cursos y Notas (separados por coma)</label>
-                <input type="text" class="form-control" id="courses" name="grades" required placeholder="Ejemplo: Matemáticas, 18, Historia, 16.5">
-                <small class="small-text">Asegúrate de ingresar todos los cursos y notas correctamente.</small>
-            </div>
+      <div class="mb-4">
+        <label for="salon" class="form-label">Salón</label>
+        <input
+          type="text"
+          class="form-control"
+          id="salon"
+          name="salon"
+          required
+          placeholder="Ejemplo: 2do B, 2do C"
+          value="{{ salon if salon else '' }}"
+          autocomplete="off"
+        />
+      </div>
 
-            <!-- Campo para seleccionar el salón -->
-            <div class="mb-3">
-                <label for="salon" class="form-label">Nuevo Salón</label>
-                <input type="text" class="form-control" id="salon" name="salon" required placeholder="Ejemplo: 2do B, 2do C">
-            </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Actualizar Alumna</button>
+      </div>
+    </form>
+  </div>
 
-            <button type="submit" class="btn btn-primary">Actualizar Alumno</button>
-        </form>
-    </div>
+<script>
+  function agregarCurso() {
+    const container = document.getElementById("cursos-container");
+    const row = document.createElement("div");
+    row.className = "row mb-2 align-items-center";
+    row.innerHTML = `
+      <div class="col-5">
+        <input type="text" class="form-control" name="subjects" placeholder="Curso">
+      </div>
+      <div class="col-5">
+        <input type="number" step="0.1" class="form-control" name="scores" placeholder="Nota">
+      </div>
+      <div class="col-2 text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarFila(this)">✕</button>
+      </div>
+    `;
+    container.appendChild(row);
+  }
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+  function eliminarFila(boton) {
+    const fila = boton.closest(".row");
+    fila.remove();
+  }
+
+  // Validación del formulario antes de enviar
+  document.getElementById("update-form").addEventListener("submit", function(event) {
+    // Eliminar alertas previas
+    const alertContainer = document.getElementById("alert-container");
+    alertContainer.innerHTML = "";
+
+    let valid = true;
+    const subjects = document.querySelectorAll("input[name='subjects']");
+    const scores = document.querySelectorAll("input[name='scores']");
+    let errorMessage = "";
+
+    for (let i = 0; i < subjects.length; i++) {
+      const subject = subjects[i].value.trim();
+      const score = scores[i].value.trim();
+
+      if (!subject) {
+        valid = false;
+        errorMessage = "El nombre del curso no puede estar vacío.";
+        break;
+      }
+      const scoreNum = parseFloat(score);
+      if (score === "" || isNaN(scoreNum) || scoreNum < 0 || scoreNum > 20) {
+        valid = false;
+        errorMessage = `La nota del curso "${subject || '(vacío)'}" debe estar entre 0 y 20.`;
+        break;
+      }
+    }
+
+    if (!valid) {
+      event.preventDefault();
+      const alertDiv = document.createElement("div");
+      alertDiv.className = "alert alert-danger mt-3";
+      alertDiv.textContent = errorMessage;
+      alertContainer.appendChild(alertDiv);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
