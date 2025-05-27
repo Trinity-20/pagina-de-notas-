@@ -3,4 +3,7 @@ uvicorn
 pymongo
 jinja2
 gunicorn
+pandas
+openpyxl
 #pyinstaller
+#http://localhost:8000/exportar_excel_salon?salon=2doB

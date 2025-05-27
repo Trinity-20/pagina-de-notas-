@@ -1,8 +1,13 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import StreamingResponse
+from openpyxl.styles import Border, Side
+from openpyxl.utils import get_column_letter
 from app.database import db
 from typing import List
+import io
+import pandas as pd
 
 app = FastAPI()
 
@@ -213,3 +218,92 @@ async def editar_alumno(request: Request, name: str):
         "salon": alumno["salon"],
         "modo_edicion": True
     })
+
+@app.get("/exportar_excel", response_class=HTMLResponse)
+async def mostrar_formulario_exportacion(request: Request):
+    salones = db.students.distinct("salon")  # Sin await
+    return templates.TemplateResponse("exportar_excel.html", {
+        "request": request,
+        "salones": salones
+    })
+
+
+@app.get("/exportar_excel_salon")
+async def exportar_excel_salon(salon: str):
+    if not salon:
+        return {"error": "Debes especificar un salón con el parámetro ?salon=SALON"}
+
+    alumnos = list(db.students.find({"salon": salon}))
+    if not alumnos:
+        return {"error": f"No se encontraron alumnas en el salón {salon}"}
+
+    # Normalizar cursos únicos para evitar duplicados por diferencias en mayúsculas/minúsculas o espacios
+    cursos_unicos = set()
+    for alumno in alumnos:
+        for grade in alumno.get("grades", []):
+            curso_normalizado = grade["subject"].strip().lower()
+            cursos_unicos.add(curso_normalizado)
+    cursos_unicos = sorted(cursos_unicos)
+
+    data = []
+    for alumno in alumnos:
+        fila = {"Apellidos y Nombres": alumno.get("name", "").strip().title()}
+        # Inicializar cursos en blanco
+        for curso in cursos_unicos:
+            fila[curso] = ""
+        # Llenar notas con cursos normalizados
+        for grade in alumno.get("grades", []):
+            curso_norm = grade["subject"].strip().lower()
+            fila[curso_norm] = grade["score"]
+        data.append(fila)
+
+    # Crear DataFrame con columnas en orden: nombre + cursos capitalizados
+    columnas = ["Apellidos y Nombres"] + list(cursos_unicos)
+    df = pd.DataFrame(data, columns=columnas)
+
+    stream = io.BytesIO()
+    with pd.ExcelWriter(stream, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name="Alumnas")
+
+        wb = writer.book
+        ws = wb["Alumnas"]
+
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+
+        max_row = ws.max_row
+        max_col = ws.max_column
+
+        # Aplicar bordes a todas las celdas con datos
+        for row in range(1, max_row + 1):
+            for col in range(1, max_col + 1):
+                cell = ws.cell(row=row, column=col)
+                cell.border = thin_border
+
+        # Opcional: Ajustar ancho de columnas automáticamente
+        for col in range(1, max_col + 1):
+            max_length = 0
+            column_letter = get_column_letter(col)
+            for row in range(1, max_row + 1):
+                cell = ws[f"{column_letter}{row}"]
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            adjusted_width = max_length + 2
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+    stream.seek(0)
+
+    filename = f"Alumnas_{salon}.xlsx"
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"'
+    }
+
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
