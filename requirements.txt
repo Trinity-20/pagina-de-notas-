@@ -6,4 +6,4 @@ gunicorn
 pandas
 openpyxl
 #pyinstaller
-#http://localhost:8000/exportar_excel_salon?salon=2doB
+#http://localhost:8000/exportar_excel_salon?salon=1a

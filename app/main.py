@@ -8,6 +8,7 @@ from app.database import db
 from typing import List
 import io
 import pandas as pd
+import unicodedata
 
 app = FastAPI()
 
@@ -227,6 +228,11 @@ async def mostrar_formulario_exportacion(request: Request):
         "salones": salones
     })
 
+def normalizar_texto(texto: str) -> str:
+    texto = texto.strip().lower()
+    texto = unicodedata.normalize('NFD', texto)
+    texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')  # elimina tildes
+    return texto 
 
 @app.get("/exportar_excel_salon")
 async def exportar_excel_salon(salon: str):
@@ -235,75 +241,50 @@ async def exportar_excel_salon(salon: str):
 
     alumnos = list(db.students.find({"salon": salon}))
     if not alumnos:
-        return {"error": f"No se encontraron alumnas en el salón {salon}"}
+        return {"error": f"No se encontraron alumnos en el salón {salon}"}
 
-    # Normalizar cursos únicos para evitar duplicados por diferencias en mayúsculas/minúsculas o espacios
-    cursos_unicos = set()
+    # Paso 1: Normalizar y mapear cursos
+    cursos_unicos = {}
     for alumno in alumnos:
         for grade in alumno.get("grades", []):
-            curso_normalizado = grade["subject"].strip().lower()
-            cursos_unicos.add(curso_normalizado)
-    cursos_unicos = sorted(cursos_unicos)
+            key = normalizar_texto(grade["subject"])
+            if key not in cursos_unicos:
+                cursos_unicos[key] = grade["subject"].strip().title()
 
+    # Paso 2: Construir filas con nombres amigables
     data = []
     for alumno in alumnos:
         fila = {"Apellidos y Nombres": alumno.get("name", "").strip().title()}
-        # Inicializar cursos en blanco
-        for curso in cursos_unicos:
-            fila[curso] = ""
-        # Llenar notas con cursos normalizados
+        for key in cursos_unicos:
+            fila[cursos_unicos[key]] = ""
         for grade in alumno.get("grades", []):
-            curso_norm = grade["subject"].strip().lower()
-            fila[curso_norm] = grade["score"]
+            curso_key = normalizar_texto(grade["subject"])
+            nombre_curso = cursos_unicos[curso_key]
+            fila[nombre_curso] = grade["score"]
         data.append(fila)
 
-    # Crear DataFrame con columnas en orden: nombre + cursos capitalizados
-    columnas = ["Apellidos y Nombres"] + list(cursos_unicos)
+    # Paso 3: Exportar a Excel
+    columnas = ["Apellidos y Nombres"] + list(cursos_unicos.values())
     df = pd.DataFrame(data, columns=columnas)
 
     stream = io.BytesIO()
     with pd.ExcelWriter(stream, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name="Alumnas")
+        ws = writer.book["Alumnas"]
 
-        wb = writer.book
-        ws = wb["Alumnas"]
+        border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+        for row in ws.iter_rows():
+            for cell in row:
+                cell.border = border
 
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
-
-        max_row = ws.max_row
-        max_col = ws.max_column
-
-        # Aplicar bordes a todas las celdas con datos
-        for row in range(1, max_row + 1):
-            for col in range(1, max_col + 1):
-                cell = ws.cell(row=row, column=col)
-                cell.border = thin_border
-
-        # Opcional: Ajustar ancho de columnas automáticamente
-        for col in range(1, max_col + 1):
-            max_length = 0
-            column_letter = get_column_letter(col)
-            for row in range(1, max_row + 1):
-                cell = ws[f"{column_letter}{row}"]
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
-            adjusted_width = max_length + 2
-            ws.column_dimensions[column_letter].width = adjusted_width
+        for col in ws.columns:
+            max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = max_length + 2
 
     stream.seek(0)
-
     filename = f"Alumnas_{salon}.xlsx"
-    headers = {
-        "Content-Disposition": f'attachment; filename="{filename}"'
-    }
-
     return StreamingResponse(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'}
     )
